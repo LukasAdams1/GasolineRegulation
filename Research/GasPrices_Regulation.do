@@ -4,7 +4,7 @@
 * ------------------------------------------------------------------------------
 
 clear
-*global GB_Directory "D:\OneDrive\GasRegulationResearch\Data"
+global GB_Directory "D:\OneDrive\GasRegulationResearch\Data"
 cd $GB_Directory
 
 *-------------------------------------------------------------------------------
@@ -61,8 +61,44 @@ rename Dcredp Dcredprice
 * Formating data on dates
 format readdate %td
 
+* Dropping a small amount of duplicates
+duplicates drop readdate statidalt, force
+duplicates report readdate statidalt
+
+xtset statidalt readdate
+
+tsfill, full
+
+forvalues i = 1/700 {
+replace zip = zip[_n-`i'] if missing(zip) & readdate>=td(1,1,2018)
+replace zip = zip[_n+`i'] if missing(zip) & readdate<=td(1,1,2018)
+}
+
+forvalues i = 1/200 {
+replace zip = zip[_n-`i'] if missing(zip) & readdate>=td(1,1,2018)
+replace zip = zip[_n+`i'] if missing(zip) & readdate<=td(1,1,2018)
+}
+
+forvalues i = 200/730 {
+replace zip = zip[_n-`i'] if missing(zip) & readdate>=td(1,1,2018)
+replace zip = zip[_n+`i'] if missing(zip) & readdate<=td(1,1,2018)
+}
+
+forvalues i = 1/200 {
+replace zip = zip[_n-`i'] if missing(zip) & readdate>=td(1,1,2018)
+replace zip = zip[_n+`i'] if missing(zip) & readdate<=td(1,1,2018)
+}
+
+drop if statidalt==102266
+drop if statidalt==193757
+
+count if missing(zip)
+
+save GB_Regulation_Inital, replace
+
 * Generating time of treatment variable
-gen after2018=(readdate>td(1,1,2018))
+gen after2018=(readdate>=td(1,1,2018))
+replace after2018 = after2018[_n-1] if missing(after2018)
 
 * Merging with County fips codes
 merge m:m zip using ZIP-COUNTY-FIPS_2016.dta
@@ -106,7 +142,6 @@ xtset statidalt readdate
 
 xtreg Rcashprice after2018 treated aftertreated, cluster(statidalt)
 
-xtreg Dcashprice after2018 treated aftertreated, cluster(statidalt)
-
+xtdidregress (Rcashprice) (aftertreated), group(statidalt) time(readdate) nogteffects aggregate(standard) 
 
 
