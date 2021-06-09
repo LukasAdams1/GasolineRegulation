@@ -2,7 +2,7 @@
 * The Effect of Self-Service Bans in the Retail Gasoline Market on Gasoline Prices
 *             - Vitor Melo and Lukas Adams
 * ------------------------------------------------------------------------------
-
+ 
 clear
 global GB_Directory "D:\OneDrive\GasRegulationResearch\Data"
 cd $GB_Directory
@@ -136,12 +136,22 @@ save GB_Regulation1, replace
 *-------------------------------------------------------------------------------
 * Diff-in-Diff analysis
 * ------------------------------------------------------------------------------
+clear
 use GB_Regulation1.dta 
+
+*drop if readdate>=td(1,7,2019)
 
 xtset statidalt readdate
 
+diff 
+
 xtreg Rcashprice after2018 treated aftertreated, cluster(statidalt)
 
-xtdidregress (Rcashprice) (aftertreated), group(statidalt) time(readdate) nogteffects aggregate(standard) 
+collapse (mean) Rcashprice, by(readdate treated)
+
+reshape wide Rcashprice, i(readdate) j(treated)
+graph twoway line Rcashprice* readdate
+
+*xtdidregress (Rcashprice) (aftertreated), group(statidalt) time(readdate) nogteffects aggregate(standard) 
 
 
