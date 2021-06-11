@@ -118,7 +118,7 @@ save GB_Regulation, replace
 *-------------------------------------------------------------------------------
 * Creating Teatment Variables and deliting duplicates
 * ------------------------------------------------------------------------------
-
+clear
 use GB_Regulation.dta 
 
 * Droping counties that were allowed to have half serlf-service gas stations
@@ -139,7 +139,95 @@ save GB_Regulation1, replace
 clear
 use GB_Regulation1.dta 
 
-*drop if readdate>=td(1,7,2019)
+*----------------------------------
+* Monthly and county level aggregation + Trends test
+* ---------------------------------
+
+* Generating Monthly data
+gen monthly_date = mofd(readdate)
+format monthly_date %tm
+
+*Collapsing data
+collapse (mean) Rcashprice, by(monthly_date fips)
+sort fips
+by fips: count if missing(Rcashprice)
+sort monthly_date
+
+* Adjusting for prices
+merge m:m monthly_date using cpi_monthly_cleaned.dta
+
+gen prices = .
+replace prices = Rcashprice/cpi*100
+
+drop Rcashprice
+rename prices Rcashprice
+drop _merge
+drop cpi
+
+*Merging with data on treatment
+merge m:m fips using fips.dta
+*Dropping counties that were allowed to have self-service from 6am-6pm
+drop if _merge==2
+drop _merge
+
+*Generating after var and interection term
+gen after2018=(monthly_date>=tm(2017m12))
+gen aftertreated = after2018 * treated
+
+*Encoding county id 
+encode county, gen(id)
+
+*Dropping counties with no observations
+drop if fips == 41069
+drop if fips == 41021
+
+* DiD analysis 
+xtset id monthly_date
+xtreg Rcashprice after2018 treated aftertreated, cluster(fips)
+xtdidregress (Rcashprice) (aftertreated), group(id) time(monthly_date) wildbootstrap(rseed(111))
+xtdidregress (Rcashprice) (aftertreated), group(id) time(monthly_date) 
+                                 * The results above are identical
+								 
+*DiD graphs and parallel trends test (pre-treatment)
+estat trendplots
+estat ptrends
+estat granger
+* Manual Graphs of means
+collapse (mean) Rcashprice, by(monthly_date treated)
+reshape wide Rcashprice, i(monthly_date) j(treated)
+graph twoway line Rcashprice* monthly_date
+
+*----------------------------------
+* Analysis without any aggregation 
+* ---------------------------------
+clear
+use GB_Regulation1.dta 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 xtset statidalt readdate
 
@@ -147,11 +235,55 @@ diff
 
 xtreg Rcashprice after2018 treated aftertreated, cluster(statidalt)
 
+
 collapse (mean) Rcashprice, by(readdate treated)
 
 reshape wide Rcashprice, i(readdate) j(treated)
 graph twoway line Rcashprice* readdate
 
 *xtdidregress (Rcashprice) (aftertreated), group(statidalt) time(readdate) nogteffects aggregate(standard) 
+
+
+collapse (mean) Rcashprice, by(readdate fips)
+
+sort fips
+
+by fips: count if missing(Rcashprice)
+
+sort readdate
+
+merge m:m fips using fips.dta
+drop if _merge==2
+drop _merge
+
+gen after2018=(readdate>=td(1,1,2018))
+gen aftertreated = after2018*treated
+
+save collapsed_means, replace
+
+use collapsed_means
+
+gen ln_price = ln(Rcashprice)
+*drop if readdate>=td(1,7,2019)
+
+xtset fips readdate
+
+drop if fips == 41069
+drop if fips == 41021
+
+xtdidregress (Rcashprice) (aftertreated), group(fips) time(readdate) nogteffects
+
+estat trendplots
+
+sort readdate
+
+
+xtreg price after2018 treated aftertreated, cluster(fips)
+
+reshape wide ln_price, i(readdate) j(treated)
+graph twoway line ln_price* readdate
+
+
+
 
 
