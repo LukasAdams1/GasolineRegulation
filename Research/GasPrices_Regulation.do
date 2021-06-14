@@ -140,18 +140,18 @@ clear
 use GB_Regulation1.dta 
 
 *----------------------------------
-* Monthly and county level aggregation + Trends test
+* county level aggregation + Trends test
 * ---------------------------------
+
+*Collapsing data
+collapse (mean) Rcashprice, by(readdate fips)
+sort fips
+by fips: count if missing(Rcashprice)
+sort readdate
 
 * Generating Monthly data
 gen monthly_date = mofd(readdate)
 format monthly_date %tm
-
-*Collapsing data
-collapse (mean) Rcashprice, by(monthly_date fips)
-sort fips
-by fips: count if missing(Rcashprice)
-sort monthly_date
 
 * Adjusting for prices
 merge m:m monthly_date using cpi_monthly_cleaned.dta
@@ -211,10 +211,10 @@ encode county, gen(id)
 drop if fips == 41069
 drop if fips == 41021
 
-keep Rcashprice after2018 treated aftertreated monthly_date fips county id unemprate year popestimate medianhouseholdincome
+keep Rcashprice after2018 treated aftertreated monthly_date fips county id unemprate year popestimate percentageinpoverty medianhouseholdincome readdate
 
 * DiD analysis 
-xtset id monthly_date
+xtset id readdate
 xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, cluster(fips)
 xtdidregress (Rcashprice) (aftertreated), group(id) time(monthly_date) wildbootstrap(rseed(111))
 xtdidregress (Rcashprice unemprate) (aftertreated), group(id) time(monthly_date) 
@@ -260,7 +260,7 @@ use GB_Regulation1.dta
 
 
 
-
+* Old models:
 
 xtset statidalt readdate
 
