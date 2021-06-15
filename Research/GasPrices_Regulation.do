@@ -134,7 +134,7 @@ gen aftertreated = after2018*treated
 save GB_Regulation1, replace
 
 *-------------------------------------------------------------------------------
-* Diff-in-Diff analysis
+* Diff-in-Diff analysis - Daily level
 * ------------------------------------------------------------------------------
 clear
 use GB_Regulation1.dta 
@@ -216,8 +216,101 @@ keep Rcashprice after2018 treated aftertreated monthly_date fips county id unemp
 * DiD analysis 
 xtset id readdate
 xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, cluster(fips)
+xtreg Rcashprice after2018 treated aftertreated unemprate, cluster(fips)
+	
+* Manual Graphs of means
+collapse (mean) Rcashprice, by(monthly_date treated)
+reshape wide Rcashprice, i(monthly_date) j(treated)
+graph twoway line Rcashprice* monthly_date
+
+
+*-------------------------------------------------------------------------------
+* Diff-in-Diff analysis - Monthly level
+* ------------------------------------------------------------------------------
+
+clear
+use GB_Regulation1.dta 
+
+*----------------------------------
+* County and Monthly level aggregation + Trends test
+* ---------------------------------
+
+* Generating Monthly data
+gen monthly_date = mofd(readdate)
+format monthly_date %tm
+
+*Collapsing data
+collapse (mean) Rcashprice, by(monthly_date fips)
+sort fips
+by fips: count if missing(Rcashprice)
+sort monthly_date
+
+
+* Adjusting for prices
+merge m:m monthly_date using cpi_monthly_cleaned.dta
+
+gen prices = .
+replace prices = Rcashprice/cpi*108.6475
+
+drop Rcashprice
+rename prices Rcashprice
+drop _merge
+drop cpi
+
+*Merging with data on treatment
+merge m:m fips using fips.dta
+*Dropping counties that were allowed to have self-service from 6am-6pm
+drop if _merge==2
+drop _merge
+
+*Generating after var and interection term
+gen after2018=(monthly_date>=tm(2017m12))
+gen aftertreated = after2018 * treated
+
+* Generating Year variable
+gen year = .
+replace year=2016 if (monthly_date<tm(2017m1))
+replace year=2019 if (monthly_date>tm(2018m12))
+replace year=2017 if (monthly_date>tm(2016m12) & monthly_date<tm(2018m1))
+replace year=2018 if (monthly_date>tm(2017m12) & monthly_date<tm(2019m1))
+
+* Merging with population data
+rename fips area_fips
+
+merge m:m area_fips year using population_updated.dta
+
+drop if _merge==1
+drop if _merge==2
+drop _merge
+
+rename area_fips fips
+
+* Merging with Poverty/income
+
+merge m:m fips year using poverty_data.dta
+drop if _merge==2
+drop _merge
+
+* Merging with Unemployment - Monthly 
+
+merge m:m fips monthly_date using unemployment_monthly_clean.dta
+drop if _merge==2
+drop _merge
+
+*Encoding county id 
+encode county, gen(id)
+
+*Dropping counties with no observations
+drop if fips == 41069
+drop if fips == 41021
+
+keep Rcashprice after2018 treated aftertreated monthly_date fips county id unemprate year popestimate percentageinpoverty medianhouseholdincome
+
+* DiD analysis 
+xtset id monthly_date
+xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, cluster(fips)
 xtdidregress (Rcashprice) (aftertreated), group(id) time(monthly_date) wildbootstrap(rseed(111))
-xtdidregress (Rcashprice unemprate) (aftertreated), group(id) time(monthly_date) 
+xtdidregress (Rcashprice) (aftertreated), group(id) time(monthly_date) 
                                  * The results above are identical
 help xtdidregress			
 			 
@@ -229,16 +322,6 @@ estat ptrends
 collapse (mean) Rcashprice, by(monthly_date treated)
 reshape wide Rcashprice, i(monthly_date) j(treated)
 graph twoway line Rcashprice* monthly_date
-
-*----------------------------------
-* Analysis without any aggregation 
-* ---------------------------------
-clear
-use GB_Regulation1.dta 
-
-
-
-
 
 
 
