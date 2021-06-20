@@ -213,15 +213,42 @@ drop if fips == 41021
 
 keep Rcashprice after2018 treated aftertreated monthly_date fips county id unemprate year popestimate percentageinpoverty medianhouseholdincome readdate
 
+* Saving dataset 
+save GB_Collapsed_Daily, replace
+
+clear
+use GB_Collapsed_Daily.dta
+
+gen zeros = 0
+
 * DiD analysis 
 xtset id readdate
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, cluster(fips)
-xtreg Rcashprice after2018 treated aftertreated unemprate, cluster(fips)
+xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome zeros, cluster(fips)
+
+* Graphical analysis of differences
+/*coefplot, connect(direct) ciopts(recast(rarea) lcolor(white) color(gs12%65)) ///
+	scheme(s1mono) omitted keep(aftertreated zeros year) vertical ///
+	yline(0, lcolor(red)) xline(4.5, lcolor(green) lpattern(dash))  ///
+	ytitle("Treatment Effect") xtitle("Date") name(example, replace) ///
+	graphregion(fcolor(white))
+ */
 	
 * Manual Graphs of means
 collapse (mean) Rcashprice, by(monthly_date treated)
 reshape wide Rcashprice, i(monthly_date) j(treated)
 graph twoway line Rcashprice* monthly_date
+
+*Graph of Differences
+collapse (mean) Rcashprice, by(monthly_date treated)
+gen prices1 = Rcashprice if treated==1
+gen prices0 =  Rcashprice if treated==0
+replace prices0 = prices0[_n-1] if missing(prices0) 
+drop if treated==0
+drop treated
+gen differences = prices1 - prices0
+
+tsset monthly_date, monthly
+line differences monthly_date
 
 
 *-------------------------------------------------------------------------------
@@ -264,7 +291,7 @@ drop if _merge==2
 drop _merge
 
 *Generating after var and interection term
-gen after2018=(monthly_date>=tm(2017m12))
+gen after2018=(monthly_date>tm(2017m12))
 gen aftertreated = after2018 * treated
 
 * Generating Year variable
@@ -306,9 +333,22 @@ drop if fips == 41021
 
 keep Rcashprice after2018 treated aftertreated monthly_date fips county id unemprate year popestimate percentageinpoverty medianhouseholdincome
 
+* Saving Collapsed dataset
+
+save GB_Collapsed_Monthly, replace
+
+clear
+use GB_Collapsed_Monthly.dta
+
+sort monthly_date
 * DiD analysis 
+
+
 xtset id monthly_date
 xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, cluster(fips)
+xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, vce(bootstrap, reps(300) seed(123) nodots)
+xtreg Rcashprice after2018 treated aftertreated, vce(bootstrap, reps(300) seed(123) nodots)
+
 xtdidregress (Rcashprice) (aftertreated), group(id) time(monthly_date) wildbootstrap(rseed(111))
 xtdidregress (Rcashprice) (aftertreated), group(id) time(monthly_date) 
                                  * The results above are identical
