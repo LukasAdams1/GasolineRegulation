@@ -213,25 +213,45 @@ drop if fips == 41021
 
 keep Rcashprice after2018 treated aftertreated monthly_date fips county id unemprate year popestimate percentageinpoverty medianhouseholdincome readdate
 
+* Labeling variables
+label variable Rcashprice "Gasoline Price"
+label variable after2018 "D1 [After 2018]"
+label variable treated "D2 [Treated]"
+label variable aftertreated "D3 [ATET]"
+label variable unemprate "Unemployment Rate"
+label variable popestimate "Population"
+label variable percentageinpoverty "Poverty Rate"
+label variable medianhouseholdincome "Median Income"
+
 * Saving dataset 
 save GB_Collapsed_Daily, replace
-
+ 
+* DiD analysis 
 clear
 use GB_Collapsed_Daily.dta
 
-gen zeros = 0
+*-------------------------------------------------------------------------------
+* Sum of Descriptive Statistics 
+* ------------------------------------------------------------------------------
+sort treated
+by treated: sum Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome
+ bysort treated: asdoc sum  Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
 
-* DiD analysis 
+sum Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome
+ asdoc sum  Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
+
+ * DiD analysis 
 xtset id readdate
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome zeros, cluster(fips)
-
-* Graphical analysis of differences
-/*coefplot, connect(direct) ciopts(recast(rarea) lcolor(white) color(gs12%65)) ///
-	scheme(s1mono) omitted keep(aftertreated zeros year) vertical ///
-	yline(0, lcolor(red)) xline(4.5, lcolor(green) lpattern(dash))  ///
-	ytitle("Treatment Effect") xtitle("Date") name(example, replace) ///
-	graphregion(fcolor(white))
- */
+xtreg Rcashprice after2018 treated aftertreated, vce(cluster fips)
+outreg2 using DiD_Daily, replace word label title(Table 2)
+xtreg Rcashprice after2018 treated aftertreated unemprate, vce(cluster fips)
+outreg2 using DiD_Daily, append word label title(Table 2)
+xtreg Rcashprice after2018 treated aftertreated unemprate popestimate, vce(cluster fips)
+outreg2 using DiD_Daily, append word label title(Table 2)
+xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty, vce(cluster fips)
+outreg2 using DiD_Daily, append word label title(Table 2)
+xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, vce(cluster fips)
+outreg2 using DiD_Daily, append word label title(Table 2)
 	
 * Manual Graphs of means
 collapse (mean) Rcashprice, by(monthly_date treated)
@@ -333,16 +353,51 @@ drop if fips == 41021
 
 keep Rcashprice after2018 treated aftertreated monthly_date fips county id unemprate year popestimate percentageinpoverty medianhouseholdincome
 
-* Saving Collapsed dataset
 
+* Labeling variables
+label variable Rcashprice "Gasoline Price"
+label variable after2018 "D1 [After 2018]"
+label variable treated "D2 [Treated]"
+label variable aftertreated "D3 [ATET]"
+label variable unemprate "Unemployment Rate"
+label variable popestimate "Population"
+label variable percentageinpoverty "Poverty Rate"
+label variable medianhouseholdincome "Median Income"
+
+* Saving Collapsed dataset
 save GB_Collapsed_Monthly, replace
 
+
+*-------------------------------------------------------------------------------
+* Sum of Descriptive Statistics 
+* ------------------------------------------------------------------------------
+sort treated
+by treated: sum Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome
+ bysort treated: asdoc sum  Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
+
+sum Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome
+ asdoc sum  Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
+
+ * DiD analysis 
+xtset id monthly_date
+xtreg Rcashprice after2018 treated aftertreated, vce(cluster fips)
+outreg2 using DiD_Monthly, replace word label title(Table 2)
+xtreg Rcashprice after2018 treated aftertreated unemprate, vce(cluster fips)
+outreg2 using DiD_Monthly, append word label title(Table 2)
+xtreg Rcashprice after2018 treated aftertreated unemprate popestimate, vce(cluster fips)
+outreg2 using DiD_Monthly, append word label title(Table 2)
+xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty, vce(cluster fips)
+outreg2 using DiD_Monthly, append word label title(Table 2)
+xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, vce(cluster fips)
+outreg2 using DiD_Monthly, append word label title(Table 2)
+
+
+
+* DiD analysis 
 clear
 use GB_Collapsed_Monthly.dta
 
 sort monthly_date
-* DiD analysis 
-
 
 xtset id monthly_date
 xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, cluster(fips)
