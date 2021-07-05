@@ -4,8 +4,12 @@
 * ------------------------------------------------------------------------------
  
 clear
-global GB_Directory "D:\OneDrive\GasRegulationResearch\Data"
-cd $GB_Directory
+
+* Setting Env Variables
+global directory: env GasolineRegulationDirectory
+
+* Setting Directory
+cd "$directory"
 
 *-------------------------------------------------------------------------------
 * Loading and appending Gasoline Prices Data
