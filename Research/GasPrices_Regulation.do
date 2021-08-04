@@ -11,6 +11,8 @@ global directory: env GasolineRegulationDirectory
 * Setting Directory
 cd "$directory"
 
+cd "C:\Users\vitor\OneDrive\Research_Resources\GasRegulation_Resources\Data"
+
 *-------------------------------------------------------------------------------
 * Loading and appending Gasoline Prices Data
 * ------------------------------------------------------------------------------
@@ -244,17 +246,27 @@ by treated: sum Rcashprice after2018 treated aftertreated unemprate popestimate 
 sum Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome
  asdoc sum  Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
 
- * DiD analysis 
+
+ * DiD analysis with Dummies
+xtset id readdate
+xtreg Rcashprice aftertreated i.monthly_date, fe vce(cluster id)
+outreg2 using DiD_Daily_Dummies, replace word label title(Table 2)
+xtreg Rcashprice aftertreated unemprate i.monthly_date, fe vce(cluster id)
+outreg2 using DiD_Daily_Dummies, append word label title(Table 2)
+xtreg Rcashprice aftertreated unemprate percentageinpoverty i.monthly_date, fe vce(cluster id)
+outreg2 using DiD_Daily_Dummies, append word label title(Table 2)
+xtreg Rcashprice aftertreated unemprate percentageinpoverty medianhouseholdincome i.monthly_date, fe vce(cluster id)
+outreg2 using DiD_Daily_Dummies, append word label title(Table 2) 
+ 
+ * DiD analysis NO dummies
 xtset id readdate
 xtreg Rcashprice after2018 treated aftertreated, vce(cluster fips)
 outreg2 using DiD_Daily, replace word label title(Table 2)
 xtreg Rcashprice after2018 treated aftertreated unemprate, vce(cluster fips)
 outreg2 using DiD_Daily, append word label title(Table 2)
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate, vce(cluster fips)
+xtreg Rcashprice after2018 treated aftertreated unemprate percentageinpoverty, vce(cluster fips)
 outreg2 using DiD_Daily, append word label title(Table 2)
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty, vce(cluster fips)
-outreg2 using DiD_Daily, append word label title(Table 2)
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, vce(cluster fips)
+xtreg Rcashprice after2018 treated aftertreated unemprate percentageinpoverty medianhouseholdincome, vce(cluster fips)
 outreg2 using DiD_Daily, append word label title(Table 2)
 	
 * Manual Graphs of means
@@ -371,7 +383,8 @@ label variable medianhouseholdincome "Median Income"
 * Saving Collapsed dataset
 save GB_Collapsed_Monthly, replace
 
-
+clear
+use GB_Collapsed_Monthly.dta
 *-------------------------------------------------------------------------------
 * Sum of Descriptive Statistics 
 * ------------------------------------------------------------------------------
@@ -382,20 +395,28 @@ by treated: sum Rcashprice after2018 treated aftertreated unemprate popestimate 
 sum Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome
  asdoc sum  Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
 
- * DiD analysis 
+ ssc install outreg2
+ * DiD analysis with Dummies
 xtset id monthly_date
-xtreg Rcashprice after2018 treated aftertreated, vce(cluster fips)
+xtreg Rcashprice aftertreated i.monthly_date, fe vce(cluster id)
+outreg2 using DiD_Monthly_Dummies, replace word label title(Table 2)
+xtreg Rcashprice aftertreated unemprate i.monthly_date, fe vce(cluster id)
+outreg2 using DiD_Monthly_Dummies, append word label title(Table 2)
+xtreg Rcashprice aftertreated unemprate percentageinpoverty i.monthly_date, fe vce(cluster id)
+outreg2 using DiD_Monthly_Dummies, append word label title(Table 2)
+xtreg Rcashprice aftertreated unemprate percentageinpoverty medianhouseholdincome i.monthly_date, fe vce(cluster id)
+outreg2 using DiD_Monthly_Dummies, append word label title(Table 2)
+
+ * DiD analysis without Dummies
+xtset id monthly_date
+xtreg Rcashprice after2018 treated aftertreated, vce(cluster id)
 outreg2 using DiD_Monthly, replace word label title(Table 2)
-xtreg Rcashprice after2018 treated aftertreated unemprate, vce(cluster fips)
+xtreg Rcashprice after2018 treated aftertreated unemprate, vce(cluster id)
 outreg2 using DiD_Monthly, append word label title(Table 2)
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate, vce(cluster fips)
+xtreg Rcashprice after2018 treated aftertreated unemprate percentageinpoverty, vce(cluster id)
 outreg2 using DiD_Monthly, append word label title(Table 2)
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty, vce(cluster fips)
+xtreg Rcashprice after2018 treated aftertreated unemprate percentageinpoverty medianhouseholdincome, vce(cluster id)
 outreg2 using DiD_Monthly, append word label title(Table 2)
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, vce(cluster fips)
-outreg2 using DiD_Monthly, append word label title(Table 2)
-
-
 
 * DiD analysis 
 clear
@@ -404,8 +425,12 @@ use GB_Collapsed_Monthly.dta
 sort monthly_date
 
 xtset id monthly_date
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, cluster(fips)
-xtreg Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, vce(bootstrap, reps(300) seed(123) nodots)
+
+xtreg Rcashprice aftertreated unemprate medianhouseholdincome percentageinpoverty i.year, fe vce(cluster id)
+
+
+xtreg Rcashprice after2018 treated aftertreated unemprate percentageinpoverty medianhouseholdincome, cluster(fips)
+xtreg Rcashprice after2018 treated aftertreated unemprate percentageinpoverty medianhouseholdincome, vce(bootstrap, reps(300) seed(123) nodots)
 xtreg Rcashprice after2018 treated aftertreated, vce(bootstrap, reps(300) seed(123) nodots)
 
 xtdidregress (Rcashprice) (aftertreated), group(id) time(monthly_date) wildbootstrap(rseed(111))
@@ -422,81 +447,6 @@ collapse (mean) Rcashprice, by(monthly_date treated)
 reshape wide Rcashprice, i(monthly_date) j(treated)
 graph twoway line Rcashprice* monthly_date
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-* Old models:
-
-xtset statidalt readdate
-
-diff 
-
-xtreg Rcashprice after2018 treated aftertreated, cluster(statidalt)
-
-
-collapse (mean) Rcashprice, by(readdate treated)
-
-reshape wide Rcashprice, i(readdate) j(treated)
-graph twoway line Rcashprice* readdate
-
-*xtdidregress (Rcashprice) (aftertreated), group(statidalt) time(readdate) nogteffects aggregate(standard) 
-
-
-collapse (mean) Rcashprice, by(readdate fips)
-
-sort fips
-
-by fips: count if missing(Rcashprice)
-
-sort readdate
-
-merge m:m fips using fips.dta
-drop if _merge==2
-drop _merge
-
-gen after2018=(readdate>=td(1,1,2018))
-gen aftertreated = after2018*treated
-
-save collapsed_means, replace
-
-use collapsed_means
-
-gen ln_price = ln(Rcashprice)
-*drop if readdate>=td(1,7,2019)
-
-xtset fips readdate
-
-drop if fips == 41069
-drop if fips == 41021
-
-xtdidregress (Rcashprice) (aftertreated), group(fips) time(readdate) nogteffects
-
-estat trendplots
-
-sort readdate
-
-
-xtreg price after2018 treated aftertreated, cluster(fips)
-
-reshape wide ln_price, i(readdate) j(treated)
-graph twoway line ln_price* readdate
 
 
 
