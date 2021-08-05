@@ -11,8 +11,6 @@ global directory: env GasolineRegulationDirectory
 * Setting Directory
 cd "$directory"
 
-cd "C:\Users\vitor\OneDrive\Research_Resources\GasRegulation_Resources\Data"
-
 *-------------------------------------------------------------------------------
 * Loading and appending Gasoline Prices Data
 * ------------------------------------------------------------------------------
@@ -187,17 +185,6 @@ replace year=2019 if (monthly_date>tm(2018m12))
 replace year=2017 if (monthly_date>tm(2016m12) & monthly_date<tm(2018m1))
 replace year=2018 if (monthly_date>tm(2017m12) & monthly_date<tm(2019m1))
 
-* Merging with population data
-rename fips area_fips
-
-merge m:m area_fips year using population_updated.dta
-
-drop if _merge==1
-drop if _merge==2
-drop _merge
-
-rename area_fips fips
-
 * Merging with Poverty/income
 
 merge m:m fips year using poverty_data.dta
@@ -336,17 +323,6 @@ replace year=2016 if (monthly_date<tm(2017m1))
 replace year=2019 if (monthly_date>tm(2018m12))
 replace year=2017 if (monthly_date>tm(2016m12) & monthly_date<tm(2018m1))
 replace year=2018 if (monthly_date>tm(2017m12) & monthly_date<tm(2019m1))
-
-* Merging with population data
-rename fips area_fips
-
-merge m:m area_fips year using population_updated.dta
-
-drop if _merge==1
-drop if _merge==2
-drop _merge
-
-rename area_fips fips
 
 * Merging with Poverty/income
 
