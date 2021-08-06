@@ -420,6 +420,8 @@ estat ptrends
 
 * Manual Graphs of means
 collapse (mean) Rcashprice, by(monthly_date treated)
+
+export delimited using MeansTrends.csv
 reshape wide Rcashprice, i(monthly_date) j(treated)
 graph twoway line Rcashprice* monthly_date
 
