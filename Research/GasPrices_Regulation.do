@@ -234,18 +234,18 @@ sum Rcashprice after2018 treated aftertreated unemprate popestimate percentagein
  asdoc sum  Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
 
 
- * DiD analysis with Dummies
+* DiD analysis with Dummies
 xtset id readdate
 xtreg Rcashprice aftertreated i.monthly_date, fe vce(cluster id)
-outreg2 using DiD_Daily_Dummies, replace word label title(Table 2)
+outreg2 using DiD_Daily_Dummies, replace word label keep(aftertreated) addtext(County FE, YES, Time FE, YES) title(Table 2)
 xtreg Rcashprice aftertreated unemprate i.monthly_date, fe vce(cluster id)
-outreg2 using DiD_Daily_Dummies, append word label title(Table 2)
+outreg2 using DiD_Daily_Dummies, append word label keep(aftertreated unemprate) addtext(County FE, YES, Time FE, YES) title(Table 2)
 xtreg Rcashprice aftertreated unemprate percentageinpoverty i.monthly_date, fe vce(cluster id)
-outreg2 using DiD_Daily_Dummies, append word label title(Table 2)
+outreg2 using DiD_Daily_Dummies, append word label keep(aftertreated unemprate percentageinpoverty) addtext(County FE, YES, Time FE, YES) title(Table 2)
 xtreg Rcashprice aftertreated unemprate percentageinpoverty medianhouseholdincome i.monthly_date, fe vce(cluster id)
-outreg2 using DiD_Daily_Dummies, append word label title(Table 2) 
+outreg2 using DiD_Daily_Dummies, append word label keep(aftertreated unemprate percentageinpoverty medianhouseholdincome) addtext(County FE, YES, Time FE, YES) title(Table 2) 
  
- * DiD analysis NO dummies
+* DiD analysis NO dummies
 xtset id readdate
 xtreg Rcashprice after2018 treated aftertreated, vce(cluster fips)
 outreg2 using DiD_Daily, replace word label title(Table 2)
@@ -274,6 +274,7 @@ tsset monthly_date, monthly
 line differences monthly_date
 
 
+********************************************************************************
 *-------------------------------------------------------------------------------
 * Diff-in-Diff analysis - Monthly level
 * ------------------------------------------------------------------------------
@@ -426,7 +427,7 @@ reshape wide Rcashprice, i(monthly_date) j(treated)
 graph twoway line Rcashprice* monthly_date
 
 
-
+xtreg Rcashprice aftertreated  i.monthly_date, fe vce(cluster id)
 
 
 
