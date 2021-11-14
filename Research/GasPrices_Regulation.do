@@ -227,11 +227,12 @@ use GB_Collapsed_Daily.dta
 * Sum of Descriptive Statistics 
 * ------------------------------------------------------------------------------
 sort treated
-by treated: sum Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome
- bysort treated: asdoc sum  Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
+by treated: sum Rcashprice unemprate popestimate percentageinpoverty medianhouseholdincome e(sample)
+ bysort treated: asdoc sum  Rcashprice unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
 
-sum Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome
- asdoc sum  Rcashprice after2018 treated aftertreated unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
+ drop if Rcashprice ==.
+sum Rcashprice unemprate popestimate percentageinpoverty medianhouseholdincome if e(sample)
+ asdoc sum  Rcashprice unemprate popestimate percentageinpoverty medianhouseholdincome, label replace
 
 
 * DiD analysis with Dummies
