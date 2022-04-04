@@ -420,13 +420,38 @@ help xtdidregress
 estat trendplots
 estat ptrends
 
+
+
+clear
+use GB_Collapsed_Monthly.dta
 * Manual Graphs of means
 collapse (mean) Rcashprice, by(monthly_date treated)
 
-export delimited using MeansTrends.csv
+*export delimited using MeansTrends.csv, replace
+/*gen MeansAdjPrice5 = (Rcashprice - 4) if treated==1
+replace MeansAdjPrice5 = Rcashprice if treated==0
+
+drop Rcashprice
+reshape wide MeansAdjPrice5, i(monthly_date) j(treated)
+graph twoway line MeansAdjPrice5* monthly_date */
+
 reshape wide Rcashprice, i(monthly_date) j(treated)
 graph twoway line Rcashprice* monthly_date
 
+*egen d = seq(), f(1) t(48)
+*drop if d>24
+gen dif = Rcashprice1 - Rcashprice0
+gen zeros = 0
+graph twoway line dif zeros monthly_date
+
+
+mean dif
+gen Rcashprice1_minusmeandif = Rcashprice1 - 5.056
+gen dif_minusmean = dif - 5.056
+
+graph twoway line dif_minusmean monthly_date, tline(2017m12) yline(0)
+
+graph twoway line dif monthly_date, tline(2017m12) yline(0)
 
 xtreg Rcashprice aftertreated  i.monthly_date, fe vce(cluster id)
 
