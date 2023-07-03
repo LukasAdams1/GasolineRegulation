@@ -457,3 +457,16 @@ xtreg Rcashprice aftertreated  i.monthly_date, fe vce(cluster id)
 
 
 
+
+/*
+
+xtdidreg (Rcashprice) (aftertreated), group(id) time(monthly_date) aggregate(standard) vce(hc2)
+
+xtdidreg (Rcashprice) (aftertreated), group(id) time(monthly_date) aggregate(standard) vce(hc2)
+
+hdidregress ipw (Rcashprice) (aftertreated), group(id) time(monthly_date)
+estat atetplot, sci
+
+
+
+
